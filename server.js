@@ -6,6 +6,7 @@ dotenv.config();
 import connectDB from "./config/db.js";
 import boxRoutes from "./routes/boxes.js";
 import { initScheduler, stopScheduler, resetScheduler } from "./utils/scheduler.js";
+import { testEmailConfiguration, sendCompletionEmail } from "./utils/mailer.js";
 
 const app = express();
 app.use(cors({
@@ -26,6 +27,39 @@ app.post("/api/admin/stop-scheduler", async (req, res) => {
 app.post("/api/admin/reset-scheduler", async (req, res) => {
   await resetScheduler();
   res.json({ reset: true });
+});
+
+app.post("/api/admin/test-email", async (req, res) => {
+  try {
+    const isValid = await testEmailConfiguration();
+    res.json({ 
+      success: isValid, 
+      message: isValid ? "Email configuration is valid" : "Email configuration failed" 
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: "Email test failed", 
+      error: error.message 
+    });
+  }
+});
+
+app.post("/api/admin/send-test-email", async (req, res) => {
+  try {
+    const info = await sendCompletionEmail("Test User");
+    res.json({ 
+      success: true, 
+      message: "Test email sent successfully", 
+      messageId: info.messageId 
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to send test email", 
+      error: error.message 
+    });
+  }
 });
 
 const PORT = process.env.PORT || 5000;

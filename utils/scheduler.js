@@ -60,7 +60,13 @@ export async function initScheduler() {
         console.log(
           "Reached 16 boxes. Stopping scheduler and sending completion email..."
         );
-        await sendCompletionEmail(process.env.FULL_NAME || "");
+        try {
+          await sendCompletionEmail(process.env.FULL_NAME || "");
+          console.log("Email sent successfully after reaching 16 boxes");
+        } catch (emailError) {
+          console.error("Failed to send completion email:", emailError);
+          // Continue with stopping the scheduler even if email fails
+        }
         if (intervalId) {
           clearInterval(intervalId);
           intervalId = null;
