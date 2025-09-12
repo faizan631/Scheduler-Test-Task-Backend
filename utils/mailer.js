@@ -13,20 +13,54 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+export async function testEmailConfiguration() {
+  try {
+    console.log("Testing email configuration...");
+    console.log("SMTP Host:", process.env.SMTP_HOST);
+    console.log("SMTP Port:", process.env.SMTP_PORT);
+    console.log("SMTP Secure:", process.env.SMTP_SECURE);
+    console.log("Email User:", process.env.EMAIL_USER);
+    console.log("Email Recipient:", process.env.EMAIL_RECIPIENT);
+    
+    // Test the transporter connection
+    await transporter.verify();
+    console.log("Email configuration is valid and ready to send emails");
+    return true;
+  } catch (error) {
+    console.error("Email configuration test failed:", error);
+    return false;
+  }
+}
+
 export async function sendCompletionEmail(fullName = "") {
-  const recipient = process.env.EMAIL_USER || "Dawood.ahmed@collaborak.com";
-  const subject = `1st Task Done - ${
-    fullName || process.env.FULL_NAME || "Applicant"
-  }`;
-  const text = `The box scheduler has reached 16 boxes and stopped.\nTime: ${new Date().toISOString()}`;
+  try {
+    // Use EMAIL_RECIPIENT instead of EMAIL_USER for the recipient
+    const recipient = process.env.EMAIL_RECIPIENT || "Dawood.ahmed@collaborak.com";
+    const sender = process.env.EMAIL_USER;
+    
+    if (!sender) {
+      throw new Error("EMAIL_USER is not configured");
+    }
+    
+    const subject = `1st Task Done - ${
+      fullName || process.env.FULL_NAME || "Applicant"
+    }`;
+    const text = `The box scheduler has reached 16 boxes and stopped.\nTime: ${new Date().toISOString()}`;
 
-  const info = await transporter.sendMail({
-    from: process.env.EMAIL_USER,
-    to: recipient,
-    subject,
-    text,
-  });
+    console.log(`Attempting to send email from ${sender} to ${recipient}`);
 
-  console.log("Completetion email sent:", info.messageId);
-  return info;
+    const info = await transporter.sendMail({
+      from: sender,
+      to: recipient,
+      subject,
+      text,
+    });
+
+    console.log("Completion email sent successfully:", info.messageId);
+    console.log("Email response:", info.response);
+    return info;
+  } catch (error) {
+    console.error("Failed to send completion email:", error);
+    throw error;
+  }
 }
